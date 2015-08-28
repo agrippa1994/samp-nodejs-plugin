@@ -3,6 +3,7 @@ CMakeFiles
 Makefile
 cmake_install.cmake
 install_manifest.txt
+build/
 
 #SAMP-Server
 /bin/samp-license.txt
@@ -19,3 +20,4 @@ install_manifest.txt
 /bin/plugins
 /bin/scriptfiles
 /bin/announce.exe
+

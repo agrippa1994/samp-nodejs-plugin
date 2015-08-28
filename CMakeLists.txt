@@ -30,6 +30,17 @@ file(GLOB_RECURSE LIB_FILES ${LIB_PATTERN})
 # Set outpout directory
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/plugins)
 
+FOREACH(CONF ${CMAKE_CONFIGURATION_TYPES})
+STRING(TOUPPER "${CONF}" CONF)
+SET("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONF}" "${CMAKE_SOURCE_DIR}/bin/plugins")
+SET("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONF}" "${CMAKE_SOURCE_DIR}/bin/plugins")
+IF(WIN32)
+  SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONF}" "${CMAKE_SOURCE_DIR}/bin/plugins")
+ELSE()
+  SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONF}" "$${CMAKE_SOURCE_DIR}/bin/plugins")
+ENDIF()
+ENDFOREACH()
+
 # Link libraries and create binary
 add_library(samp-nodejs-plugin MODULE ${SRC_FILES})
 target_link_libraries(samp-nodejs-plugin ${LIB_FILES})
