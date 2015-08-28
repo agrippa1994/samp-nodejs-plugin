@@ -21,3 +21,5 @@ build/
 /bin/scriptfiles
 /bin/announce.exe
 
+/bin/crashinfo.txt
+/bin/samp-server.idb
