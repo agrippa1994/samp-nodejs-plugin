@@ -9,90 +9,91 @@
 #include <vector>
 #include <memory>
 
-namespace amx2jx {
+namespace AMX2JX {
+	namespace Internal {
+		enum class DataType {
+			type_int, type_float
+		};
 
-	enum class amxDataType {
-		type_int, type_float
-	};
+		// This class converts an amx value to a js value
 
-	// This class converts an amx value to a js value
+		class ValueBase {
+		public:
+			virtual JXValue value() = 0;
 
-	class amx2jsValueBase {
-	public:
-		virtual JXValue value() = 0;
+		protected:
+			virtual ~ValueBase() { };
+		};
 
-	protected:
-		virtual ~amx2jsValueBase() { };
-	};
-
-	template<amxDataType dataType>
-	class amx2jsValue: public amx2jsValueBase { };
+		template<DataType dataType>
+		class Value : public ValueBase { };
 
 
-	template<>
-	class amx2jsValue < amxDataType::type_int > : public amx2jsValueBase {
-		JX::ScopedValue jxValue_;
-	public:
-		amx2jsValue(cell p) {
-			JX_SetInt32(&jxValue_, p);
-		}
-
-		JXValue value() {
-			return jxValue_;
-		}
-	};
-
-	template<>
-	class amx2jsValue < amxDataType::type_float > : public amx2jsValueBase {
-		JX::ScopedValue jxValue_;
-	public:
-		amx2jsValue(cell p) {
-			JX_SetDouble(&jxValue_, amx_ctof(p));
-		}
-
-		JXValue value() {
-			return jxValue_;
-		}
-	};
-	
-	class amx2jxValueParser {
-		std::istream& is_;
-	public:
-		amx2jxValueParser(std::istream& is) : is_(is) {
-
-		}
-
-		std::shared_ptr<amx2jsValueBase> readFromStream(cell param) {
-			if (!is_.good())
-				return nullptr;
-			
-			char c = 0;
-			is_ >> c;
-
-			switch (c) {
-			case 'i':
-			case 'd':
-				return std::make_shared<amx2jsValue<amxDataType::type_int>>(param);
-			case 'f':
-				return std::make_shared<amx2jsValue<amxDataType::type_float>>(param);
+		template<>
+		class Value < DataType::type_int > : public ValueBase {
+			JX::ScopedValue jxValue_;
+		public:
+			Value(cell p) {
+				JX_SetInt32(&jxValue_, p);
 			}
-			return nullptr;
-		}
-		
-	};
+
+			JXValue value() {
+				return jxValue_;
+			}
+		};
+
+		template<>
+		class Value < DataType::type_float > : public ValueBase {
+			JX::ScopedValue jxValue_;
+		public:
+			Value(cell p) {
+				JX_SetDouble(&jxValue_, amx_ctof(p));
+			}
+
+			JXValue value() {
+				return jxValue_;
+			}
+		};
+
+		class ValueConverter {
+			std::istream& is_;
+		public:
+			ValueConverter(std::istream& is) : is_(is) {
+
+			}
+
+			std::shared_ptr<ValueBase> readFromStream(cell param) {
+				if (!is_.good())
+					return nullptr;
+
+				char c = 0;
+				is_ >> c;
+
+				switch (c) {
+				case 'i':
+				case 'd':
+					return std::make_shared<Value<DataType::type_int>>(param);
+				case 'f':
+					return std::make_shared<Value<DataType::type_float>>(param);
+				}
+				return nullptr;
+			}
+
+		};
+	}
 
 	// This class is used to convert values from PAWN to JavaScript (e.g. public calls)
-	class amx2jx {
+	class AMX2JX {
 		AMX *amx_;
-		std::vector<std::shared_ptr<amx2jsValueBase>> jxValues_;
+		std::vector<std::shared_ptr<Internal::ValueBase>> jxValues_;
 
 	public:
-		amx2jx(AMX *amx, const std::string& format, cell *params) : amx_(amx) {
+		AMX2JX(AMX *amx, const std::string& format, cell *params) : amx_(amx) {
 			std::stringstream ss(format);
-			amx2jxValueParser parser(ss);
+			Internal::ValueConverter converter(ss);
 
 			for (size_t i = 1; i < (params[0] / sizeof(cell)) + 1; i++) {
-				jxValues_.push_back(parser.readFromStream(params[i]));
+				jxValues_.push_back(converter.readFromStream(params[i]));
 			}
 		}
 

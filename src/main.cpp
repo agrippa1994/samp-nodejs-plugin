@@ -101,7 +101,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL OnPublicCall(AMX *amx, const char *name, cell *pa
 				
 				for (auto& callback : entry->callbacks()) {
 					JX::ScopedValue jxFunctionReturnValue;
-					amx2jx::amx2jx(amx, entry->format(), params)(&callback, &jxFunctionReturnValue);
+					AMX2JX::AMX2JX(amx, entry->format(), params)(&callback, &jxFunctionReturnValue);
 
 					if (JX_IsObject(&jxFunctionReturnValue)) {
 						JX::ScopedValue jxSkipPublic, jxSetReturnValueTo;
