@@ -1,12 +1,9 @@
 var samp = require("samp");
 
-process.on("uncaughtException", function() {
-
+samp.onPublic("OnGameModeInit", "", function() {
+	console.log("OnGameModeInit!");
 });
 
-samp.setPublicCallHandler(function(name) {
-	console.log("SAMP has triggered a public callback: " + name);
+samp.onPublic("AddIntsInJS", "dd", function(a, b) {
+	return { setReturnValueTo: a+b };
 });
-
-setInterval(function() {
-}, 100);

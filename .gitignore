@@ -13,7 +13,6 @@ build/
 /bin/server_log.txt
 /bin/server-readme.txt
 /bin/filterscripts
-/bin/gamemodes
 /bin/include
 /bin/npcmodes
 /bin/pawno
@@ -23,3 +22,5 @@ build/
 
 /bin/crashinfo.txt
 /bin/samp-server.idb
+
+*.amx
