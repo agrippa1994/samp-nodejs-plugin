@@ -8,15 +8,15 @@
 #include <sstream>
 #include <vector>
 #include <memory>
+#include <iostream>
 
 namespace AMX2JX {
 	namespace Internal {
 		enum class DataType {
-			type_int, type_float
+			type_int, type_float, type_string
 		};
 
 		// This class converts an amx value to a js value
-
 		class ValueBase {
 		public:
 			virtual JXValue value() = 0;
@@ -33,7 +33,7 @@ namespace AMX2JX {
 		class Value < DataType::type_int > : public ValueBase {
 			JX::ScopedValue jxValue_;
 		public:
-			Value(cell p) {
+			Value(AMX *amx, cell p) {
 				JX_SetInt32(&jxValue_, p);
 			}
 
@@ -46,8 +46,47 @@ namespace AMX2JX {
 		class Value < DataType::type_float > : public ValueBase {
 			JX::ScopedValue jxValue_;
 		public:
-			Value(cell p) {
+			Value(AMX *amx, cell p) {
 				JX_SetDouble(&jxValue_, amx_ctof(p));
+			}
+
+			JXValue value() {
+				return jxValue_;
+			}
+		};
+
+		template<>
+		class Value < DataType::type_string > : public ValueBase {
+			JX::ScopedValue jxValue_;
+			cell *addr_ = 0;
+			cell len_ = 0;
+			char *text_ = nullptr;
+		public:
+			Value(AMX *amx, cell p) {
+				
+				std::cout << "STRING: " << std::endl;
+
+				
+		
+				amx_StrLen(addr_, &len_);
+				std::cout << "STRING: " << std::endl;
+
+				if (!len_)
+					return;
+				
+				text_ = new char[++len_];
+				memset(text_, 0, len_);
+
+				amx_GetString(text_, addr_, 0, len_);
+				
+				JX_SetString(&jxValue_, text_);
+
+			}
+
+			~Value() {
+				if (text_) {
+					delete[] text_;
+				}
 			}
 
 			JXValue value() {
@@ -57,8 +96,9 @@ namespace AMX2JX {
 
 		class ValueConverter {
 			std::istream& is_;
+			AMX *amx_;
 		public:
-			ValueConverter(std::istream& is) : is_(is) {
+			ValueConverter(AMX *amx, std::istream& is) : amx_(amx), is_(is) {
 
 			}
 
@@ -72,9 +112,11 @@ namespace AMX2JX {
 				switch (c) {
 				case 'i':
 				case 'd':
-					return std::make_shared<Value<DataType::type_int>>(param);
+					return std::make_shared<Value<DataType::type_int>>(amx_, param);
 				case 'f':
-					return std::make_shared<Value<DataType::type_float>>(param);
+					return std::make_shared<Value<DataType::type_float>>(amx_, param);
+				case 's':
+					return std::make_shared<Value<DataType::type_string>>(amx_, param);
 				}
 				return nullptr;
 			}
@@ -90,13 +132,13 @@ namespace AMX2JX {
 	public:
 		AMX2JX(AMX *amx, const std::string& format, cell *params) : amx_(amx) {
 			std::stringstream ss(format);
-			Internal::ValueConverter converter(ss);
+			Internal::ValueConverter converter(amx_, ss);
 
 			for (size_t i = 1; i < (params[0] / sizeof(cell)) + 1; i++) {
 				jxValues_.push_back(converter.readFromStream(params[i]));
 			}
 		}
-
+		
 		bool operator()(JXValue *func, JXValue *firstParams, size_t numberOfFirstParams, JXValue *output) {
 			std::vector<JXValue> params;
 

@@ -36,6 +36,9 @@ public OnPlayerRequestClass(playerid, classid)
 forward Timer();
 public Timer() {
 	printf("AddIntsInJS returned: %d", CallLocalFunction("AddIntsInJS", "dd", 5, 30));
+	printf("AddIntsInJS returned: %d", CallLocalFunction("AddIntsInJS", "dd", 5, 30));
+	
+	CallLocalFunction("PrintStringInJS", "ds", 5, "hello");
 }
 public OnGameModeInit()
 {

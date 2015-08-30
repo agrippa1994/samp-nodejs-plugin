@@ -3,6 +3,8 @@
 #include <sampgdk/core.h>
 #include <sampgdk/sdk.h>
 #include <sampgdk/interop.h>
+
+#include "Publics.hpp"
 #include "JX.hpp"
 #include "AMX2JX.hpp"
 #include "JX2AMX.hpp"
@@ -61,7 +63,7 @@ void setPublicCallHook(JXResult *args, int argc) {
 		JX_GetIndexedProperty(&args[0], i, &jxCallParamsDesc);
 		if (JX_IsNullOrUndefined(&jxCallParamsDesc))
 			return JX_SetBoolean(args + argc, ret);
-
+		
 		JX::ScopedValue jxName, jxFormat, jxCallbacks;
 		JX_GetNamedProperty(&jxCallParamsDesc, "name", &jxName);
 		JX_GetNamedProperty(&jxCallParamsDesc, "format", &jxFormat);
@@ -91,7 +93,15 @@ void uncaughtException(JXResult *args, int argc) {
 	sampgdk::logprintf("Exception %s", JX_GetString(&args[0]));
 }
 
-PLUGIN_EXPORT bool PLUGIN_CALL OnPublicCall(AMX *amx, const char *name, cell *params, cell *retval) {
+bool OnPublic(AMX *amx, const char *name, cell *params, cell *retval) {
+	cell *ph = 0;
+	/*
+	if (!strcmp("PrintStringInJS", name)) {
+		amx_GetAddr(amx, params[2], &ph);
+		std::cout << "asdfasdfasfasfd" << std::endl;
+	}
+	*/
+
 	bool skipPublic = false;
 	try {
 		for (const auto entry : publicCallHookEntries) {
@@ -136,6 +146,8 @@ PLUGIN_EXPORT unsigned int PLUGIN_CALL Supports() {
 
 PLUGIN_EXPORT bool PLUGIN_CALL Load(void **ppData) {
 	bool loadResult = sampgdk::Load(ppData);
+	Publics::init(ppData);
+	Publics::setPublicCallHandler(OnPublic);
 
 	JX_Initialize("", NULL);
 	JX_InitializeNewEngine();
