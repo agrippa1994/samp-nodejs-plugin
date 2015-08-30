@@ -63,13 +63,7 @@ namespace AMX2JX {
 			char *text_ = nullptr;
 		public:
 			Value(AMX *amx, cell p) {
-				
-				std::cout << "STRING: " << std::endl;
-
-				
-		
 				amx_StrLen(addr_, &len_);
-				std::cout << "STRING: " << std::endl;
 
 				if (!len_)
 					return;
@@ -80,7 +74,6 @@ namespace AMX2JX {
 				amx_GetString(text_, addr_, 0, len_);
 				
 				JX_SetString(&jxValue_, text_);
-
 			}
 
 			~Value() {
