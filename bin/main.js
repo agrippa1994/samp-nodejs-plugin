@@ -9,6 +9,16 @@ samp.onPublic("AddIntsInJS", "dd", function(a, b) {
 	return { setReturnValueTo: a+b };
 });
 
-samp.onPublic("PrintStringInJS", "ds", function(d, text) {
-	console.log("String from PAWN: " + text);
+
+samp.onPublic("StrlenInJS", "s", function(text) {
+	console.log("PAWN wants to know, how long the given string is (" + text + ")");
+    return { setReturnValueTo: text.length, skipPublic: true };
+});
+
+samp.onPublic("OnGameModeExit", "", function() {
+    console.log("JavaScript execution is stopped!");
+});
+
+samp.onPublic("OnFilterScriptExit", "", function() {
+    console.log("Filterscript exit!");
 });

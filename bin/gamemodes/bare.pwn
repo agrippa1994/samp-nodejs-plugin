@@ -38,10 +38,11 @@ public Timer() {
 	printf("AddIntsInJS returned: %d", CallLocalFunction("AddIntsInJS", "dd", 5, 30));
 	printf("AddIntsInJS returned: %d", CallLocalFunction("AddIntsInJS", "dd", 5, 30));
 	
-	CallLocalFunction("PrintStringInJS", "ds", 5, "hello");
+	printf("Strlen in JS %d", CallLocalFunction("StrlenInJS", "s", "This is a test string"));
 }
 public OnGameModeInit()
 {
+	printf("ONGAMEMODEINIT!");
  	SetTimerEx("Timer", 250, true, "df", 5, 12.5);
 
 	SetGameModeText("Bare Script");
