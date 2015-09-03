@@ -1,12 +1,7 @@
 #pragma once
-#pragma comment(lib, "detours.lib")
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <detours.h>
-
+#include <subhook/subhook.h>
 #include <type_traits>
-
+#include <iostream>
 
 enum class convention_type{
 	stdcall_t, cdecl_t, thiscall_t
@@ -30,84 +25,42 @@ struct convention < convention_type::thiscall_t, retn, args... > {
 };
 
 
-template<convention_type tp, typename retn, typename ...args> class Hook
+template<convention_type tp, typename retn, typename... args> class Hook
 {
 	typedef typename convention<tp, retn, args...>::type type;
 
-	type _orig;
-	type _detour;
-
-	bool _isApplied;
-	/*	
-	void *DetourFunction(BYTE *source, const BYTE *destination, const int length)
-	{
-		Disasm(NULL);
-		// source - original function.
-		// destination - new function.
-		// length - length of bytes to patch.
-
-		BYTE *jmp = (BYTE *)malloc(length + 5);
-		DWORD dwBack;
-
-		VirtualProtect(source, length, PAGE_EXECUTE_READWRITE, &dwBack);
-
-		memcpy(jmp, source, length);
-		jmp += length;
-
-		jmp[0] = 0xE9;
-		*(DWORD *)(jmp + 1) = (DWORD)(source + length - jmp) - 5;
-
-		source[0] = 0xE9;
-		*(DWORD*)(source + 1) = (DWORD)(destination - source) - 5;
-
-		for (int i = 5; i < length; i++)
-		{
-			source[i] = 0x90;
-		}
-
-		VirtualProtect(source, length, dwBack, &dwBack);
-
-		return (jmp - length);
-	}
-
-	*/
+	SubHook hook_;
 
 public:
-	Hook() : _isApplied(false), _orig(0), _detour(0) { }
+	Hook() { }
 
 	template<typename T>
 	Hook(T pFunc, type detour) {
 		apply<T>(pFunc, detour);
 	}
 
-	~Hook(){
-		remove();
-	}
-
 	template<typename T>
-	void apply(T pFunc, type detour)
-	{
-		_detour = detour;
-		_orig = (type)DetourFunction((PBYTE)pFunc, (PBYTE)_detour);
-		_isApplied = true;
+	void apply(T pFunc, type detour) {
+		hook_.Install((void *)pFunc, (void *)detour);
 	}
 
-	bool remove()
-	{
-		if (!_isApplied)
-			return false;
-
-		_isApplied = false;
-		return false;
-		return DetourRemove((PBYTE)_orig, (PBYTE)_detour) > 0;
+	bool remove() {
+		return hook_.Remove();
 	}
 
-	retn callOrig(args... p)
+	retn operator()(args... p)
 	{
-		return _orig(p...);
+		if (!hook_.IsInstalled())
+			throw std::exception("Hook is not installed!");
+
+		if (hook_.GetTrampoline() == 0)
+			throw std::exception("Trampoline is null!");
+
+		std::cout << "is null: " << (hook_.GetTrampoline() == 0) << std::endl;
+		return ((type)(hook_.GetTrampoline()))(p...);
 	}
 
 	const bool isApplied() const {
-		return _isApplied;
+		return hook_.IsInstalled();
 	}
 };

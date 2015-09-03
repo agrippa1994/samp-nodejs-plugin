@@ -9,11 +9,14 @@ set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib)
 # Set include directories
 include_directories("${INCLUDE_DIR}")
 
+# Set defines
+add_definitions(-DSUBHOOK_STATIC)
+
 # Add all source files
 if(WIN32)
-    set(SRC_PATTERN ${SRC_DIR}/*.cpp ${SRC_DIR}/*.def ${SRC_DIR}/*.c)
+    set(SRC_PATTERN ${SRC_DIR}/*.cpp ${SRC_DIR}/*.def ${SRC_DIR}/*.c ${INCLUDE_DIR}/*.cpp ${INCLUDE_DIR}/*.def ${INCLUDE_DIR}/*.c)
 else()
-    set(SRC_PATTERN ${SRC_DIR}/*.cpp ${SRC_DIR}/*.c)
+    set(SRC_PATTERN ${SRC_DIR}/*.cpp ${SRC_DIR}/*.c ${INCLUDE_DIR}/*.cpp ${INCLUDE_DIR}/*.def ${INCLUDE_DIR}/*.c)
 endif()
 
 file(GLOB_RECURSE SRC_FILES ${SRC_PATTERN})

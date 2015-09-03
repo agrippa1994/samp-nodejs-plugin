@@ -1,5 +1,3 @@
-
-
 #include <sampgdk/core.h>
 #include <sampgdk/sdk.h>
 #include <sampgdk/interop.h>
