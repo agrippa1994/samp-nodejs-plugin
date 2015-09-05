@@ -4,9 +4,9 @@
 #include "jx.hpp"
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <memory>
 #include <sstream>
+#include <iostream>
 
 namespace Publics {
 	namespace Internal {
@@ -274,7 +274,14 @@ namespace Publics {
 		Internal::findPublicHook.apply(((void **)ppData[PLUGIN_DATA_AMX_EXPORTS])[PLUGIN_AMX_EXPORT_FindPublic], [](AMX *amx, const char *name, int *idx) -> int {
 			// FindPublic is used in pawn to find a public function. Here we can fetch the function's name
 			Internal::currentPublic = name;
-			return Internal::findPublicHook(amx, name, idx);
+			auto ret = Internal::findPublicHook(amx, name, idx);
+
+			if (ret) {
+				*idx = 1000;
+				return 0;
+			}
+
+			return AMX_ERR_NONE;
 		});
 
 		Internal::pushHook.apply(((void **)ppData[PLUGIN_DATA_AMX_EXPORTS])[PLUGIN_AMX_EXPORT_Push], [](AMX *amx, cell value) -> int {
@@ -287,20 +294,13 @@ namespace Publics {
 
 		Internal::pushStringHook.apply(((void **)ppData[PLUGIN_DATA_AMX_EXPORTS])[PLUGIN_AMX_EXPORT_PushString], [](AMX *amx, cell *amxAddr, cell **physAddr, const char *str, int pack, int useWChar) -> int {
 			// Push string value into the stack
-
-			sampgdk::logprintf("PUGH STRING");
-
 			Internal::stack.push(std::string(str));
-			sampgdk::logprintf("PUGH STRING");
-
+	
 			// amx_PushString calls amx_Push internally and so we've to skip the next push
 			Internal::stack.shouldSkipPush(true);
-			sampgdk::logprintf("PUGH STRING");
 			auto ret = Internal::pushStringHook(amx, amxAddr, physAddr, str, pack, useWChar);
-			sampgdk::logprintf("PUGH STRING");
 			Internal::stack.shouldSkipPush(false);
-			
-			
+				
 			// Return the result of our hook
 			return ret;
 		});
@@ -311,7 +311,7 @@ namespace Publics {
 			Internal::stack.clearStack();
 
 			if (Internal::currentPublic.empty())
-				return Internal::execHook(amx, retVal, idx);
+				return idx == 1000 ? 0 : Internal::execHook(amx, retVal, idx);
 
 			std::string functionName = Internal::currentPublic;
 			Internal::currentPublic.clear();
@@ -342,7 +342,7 @@ namespace Publics {
 							skipPublic = JX_GetBoolean(&jxSkipPublic);
 
 						if (!skipPublic)
-							returnValue = Internal::execHook(amx, retVal, idx);
+							returnValue = idx == 1000 ? 0 : Internal::execHook(amx, retVal, idx);
 
 						if (JX_IsInt32(&jxSetReturnValueTo) && retVal)
 							*retVal = JX_GetInt32(&jxSetReturnValueTo);
@@ -351,14 +351,14 @@ namespace Publics {
 					}
 				}
 			}
-			catch (const std::exception& e) {
-				sampgdk::logprintf("Exception: %s", e.what());
+			catch (const std::exception& ) {
+				
 			}
 			catch (...) {
-				sampgdk::logprintf("Unknown exception");
+			
 			}
 
-			return Internal::execHook(amx, retVal, idx);
+			return idx == 1000 ? 0 : Internal::execHook(amx, retVal, idx);
 		});
 		
 	}

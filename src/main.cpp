@@ -1,28 +1,23 @@
-#include <sampgdk/core.h>
-#include <sampgdk/sdk.h>
-#include <sampgdk/interop.h>
-
+#include "sampsdk/plugin.h"
 #include "Publics.hpp"
 #include "JX.hpp"
-#include "JX2AMX.hpp"
-#include <string>
 
+typedef void(*logprintf_t)(char* format, ...);
+
+logprintf_t logprintf;
+extern void *pAMXFunctions;
 
 void uncaughtException(JXResult *args, int argc) {
-
-	sampgdk::logprintf("Exception %s", JX_GetString(&args[0]));
+	logprintf("Exception %s", JX_GetString(&args[0]));
 }
 
-
 PLUGIN_EXPORT unsigned int PLUGIN_CALL Supports() {
-	return sampgdk::Supports() | SUPPORTS_PROCESS_TICK;
+	return SUPPORTS_VERSION | SUPPORTS_AMX_NATIVES | SUPPORTS_PROCESS_TICK;
 }
 
 PLUGIN_EXPORT bool PLUGIN_CALL Load(void **ppData) {
-	bool loadResult = sampgdk::Load(ppData);
 	Publics::init(ppData);
 	
-
 	JX_Initialize("", NULL);
 	JX_InitializeNewEngine();
 
@@ -30,7 +25,6 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void **ppData) {
 	JX_DefineExtension("uncaughtException", uncaughtException);
 
 	JX_DefineFile("samp", R"(
-
 		// Bind natives to the module
 		module.exports = process.natives;
 
@@ -84,18 +78,16 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void **ppData) {
 		};
 
 		setInterval(function() { }, 100);
-
 	)");
 
 	JX_StartEngine();
-	return loadResult;
+	return true;
 }
 
 PLUGIN_EXPORT void PLUGIN_CALL Unload() {
-	sampgdk::Unload();
+	Publics::exit();
 }
 
 PLUGIN_EXPORT void PLUGIN_CALL ProcessTick() {
 	JX_LoopOnce();
-	sampgdk::ProcessTick();
 }

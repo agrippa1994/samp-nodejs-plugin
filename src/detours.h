@@ -1,7 +1,5 @@
 #pragma once
 #include <subhook/subhook.h>
-#include <type_traits>
-#include <iostream>
 
 enum class convention_type{
 	stdcall_t, cdecl_t, thiscall_t
@@ -24,9 +22,7 @@ struct convention < convention_type::thiscall_t, retn, args... > {
 	typedef retn(__fastcall *type)(void *, args...);
 };
 
-
-template<convention_type tp, typename retn, typename... args> class Hook
-{
+template<convention_type tp, typename retn, typename... args> class Hook {
 	typedef typename convention<tp, retn, args...>::type type;
 
 	SubHook hook_;
@@ -48,15 +44,13 @@ public:
 		return hook_.Remove();
 	}
 
-	retn operator()(args... p)
-	{
+	retn operator()(args... p) {
 		if (!hook_.IsInstalled())
 			throw std::exception("Hook is not installed!");
 
 		if (hook_.GetTrampoline() == 0)
 			throw std::exception("Trampoline is null!");
 
-		std::cout << "is null: " << (hook_.GetTrampoline() == 0) << std::endl;
 		return ((type)(hook_.GetTrampoline()))(p...);
 	}
 
